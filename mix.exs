@@ -22,6 +22,7 @@ defmodule Yesql.Mixfile do
   defp deps do
     [
       {:mix_test_watch, ">= 0.0.0", only: :dev},
+      {:postgrex, "~> 0.12", only: [:dev, :test]},
     ]
   end
 end

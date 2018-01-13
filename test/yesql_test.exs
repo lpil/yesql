@@ -1,6 +1,9 @@
 defmodule YesqlTest do
   use ExUnit.Case
   doctest Yesql
+  import TestHelper
+
+  setup_all [:new_postgrex_connection, :create_cats_postgres_table]
 
   describe "parse/1" do
     import Yesql, only: [parse: 1]
@@ -67,6 +70,41 @@ defmodule YesqlTest do
     test "complex 3" do
       assert parse("SELECT ARRAY [:value1] FROM dual") ==
                {:ok, "SELECT ARRAY [?] FROM dual", [:value1]}
+    end
+  end
+
+  describe "exec/4" do
+    setup [:truncate_postgres_cats]
+
+    test "unknown driver" do
+      assert_raise Yesql.UnknownDriver, "Unknown database driver Elixir.Boopatron", fn ->
+        Yesql.exec(self(), Boopatron, "", [], %{})
+      end
+    end
+
+    test "Postgrex insert", ctx do
+      sql = "INSERT INTO cats (age) VALUES ($1)"
+      assert {:ok, 1, []} = Yesql.exec(ctx.postgrex, Postgrex, sql, [:age], %{age: 5})
+    end
+
+    test "Postgrex insert returning columns", ctx do
+      sql = "INSERT INTO cats (age) VALUES ($1), (10) RETURNING age"
+      assert {:ok, 2, results} = Yesql.exec(ctx.postgrex, Postgrex, sql, [:age], %{age: 5})
+      assert results == [%{age: 5}, %{age: 10}]
+    end
+
+    test "Postgrex select", ctx do
+      insert_sql = "INSERT INTO cats (age) VALUES ($1), (10)"
+      assert {:ok, 2, _} = Yesql.exec(ctx.postgrex, Postgrex, insert_sql, [:age], %{age: 5})
+      sql = "SELECT * FROM cats"
+      assert {:ok, 2, results} = Yesql.exec(ctx.postgrex, Postgrex, sql, [], %{})
+      assert results == [%{age: 5, name: nil}, %{age: 10, name: nil}]
+    end
+
+    test "Postgrex invalid insert", ctx do
+      insert_sql = "INSERT INTO cats (size) VALUES ($1), (10)"
+      assert {:error, error} = Yesql.exec(ctx.postgrex, Postgrex, insert_sql, [:age], %{age: 1})
+      assert error.postgres.message == "column \"size\" of relation \"cats\" does not exist"
     end
   end
 end
