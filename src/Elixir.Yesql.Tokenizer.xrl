@@ -7,9 +7,8 @@ String     = '([^\\'']|\\.)*'
 
 Rules.
 
-{NamedParam} : {token, {named_param, new_param(TokenChars)}}.
-{String}     : {token, {fragment, new_fragment(TokenChars)}}.
-{Fragment}   : {token, {fragment, new_fragment(TokenChars)}}.
+{NamedParam}           : {token, {named_param, new_param(TokenChars)}}.
+({String}|{Fragment})+ : {token, {fragment, new_fragment(TokenChars)}}.
 
 
 Erlang code.

@@ -14,32 +14,20 @@ defmodule Yesql do
   @doc false
   def parse(sql) do
     extract_param = fn
-      param, {sql, params} when is_atom(param) ->
+      {:named_param, param}, {sql, params} ->
         {[sql, "?"], [param | params]}
 
-      fragment, {sql, params} ->
+      {:fragment, fragment}, {sql, params} ->
         {[sql, fragment], params}
-    end
-
-    merge_fragments = fn
-      [{:fragment, _} | _] = tokens ->
-        tokens
-        |> Keyword.values()
-        |> IO.iodata_to_binary()
-        |> List.wrap()
-
-      tokens ->
-        Keyword.values(tokens)
     end
 
     with {:ok, tokens, _} <- Yesql.Tokenizer.tokenize(sql) do
       {query_iodata, rev_params} =
         tokens
-        |> Enum.chunk_by(&elem(&1, 0))
-        |> Enum.flat_map(merge_fragments)
         |> Enum.reduce({[], []}, extract_param)
 
-      {:ok, IO.iodata_to_binary(query_iodata), Enum.reverse(rev_params)}
+      sql = IO.iodata_to_binary(query_iodata)
+      {:ok, sql, Enum.reverse(rev_params)}
     end
   end
 
