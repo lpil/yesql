@@ -13,27 +13,27 @@ defmodule YesqlTest do
                {:ok, "SELECT * FROM person WHERE age > 18", []}
 
       assert parse("SELECT * FROM person WHERE age > :age") ==
-               {:ok, "SELECT * FROM person WHERE age > ?", [:age]}
+               {:ok, "SELECT * FROM person WHERE age > $1", [:age]}
 
       assert parse("SELECT * FROM person WHERE :age > age") ==
-               {:ok, "SELECT * FROM person WHERE ? > age", [:age]}
+               {:ok, "SELECT * FROM person WHERE $1 > age", [:age]}
 
       assert parse("SELECT 1 FROM dual") == {:ok, "SELECT 1 FROM dual", []}
-      assert parse("SELECT :value FROM dual") == {:ok, "SELECT ? FROM dual", [:value]}
+      assert parse("SELECT :value FROM dual") == {:ok, "SELECT $1 FROM dual", [:value]}
       assert parse("SELECT 'test' FROM dual") == {:ok, "SELECT 'test' FROM dual", []}
       assert parse("SELECT 'test'\nFROM dual") == {:ok, "SELECT 'test'\nFROM dual", []}
 
       assert parse("SELECT :value, :other_value FROM dual") ==
-               {:ok, "SELECT ?, ? FROM dual", [:value, :other_value]}
+               {:ok, "SELECT $1, $2 FROM dual", [:value, :other_value]}
     end
 
     test "Tokenization rules" do
-      assert parse("SELECT :age-5 FROM dual") == {:ok, "SELECT ?-5 FROM dual", [:age]}
+      assert parse("SELECT :age-5 FROM dual") == {:ok, "SELECT $1-5 FROM dual", [:age]}
     end
 
     test "escapes" do
       assert parse("SELECT :value, :other_value, ':not_a_value' FROM dual") ==
-               {:ok, "SELECT ?, ?, ':not_a_value' FROM dual", [:value, :other_value]}
+               {:ok, "SELECT $1, $2, ':not_a_value' FROM dual", [:value, :other_value]}
 
       assert parse(~S"SELECT 'not \' :a_value' FROM dual") ==
                {:ok, ~S"SELECT 'not \' :a_value' FROM dual", []}
@@ -41,20 +41,20 @@ defmodule YesqlTest do
 
     test "casting" do
       assert parse("SELECT :value, :other_value, 5::text FROM dual") ==
-               {:ok, "SELECT ?, ?, 5::text FROM dual", [:value, :other_value]}
+               {:ok, "SELECT $1, $2, 5::text FROM dual", [:value, :other_value]}
     end
 
     test "newlines are preserved" do
       assert parse("SELECT :value, :other_value, 5::text\nFROM dual") ==
-               {:ok, "SELECT ?, ?, 5::text\nFROM dual", [:value, :other_value]}
+               {:ok, "SELECT $1, $2, 5::text\nFROM dual", [:value, :other_value]}
     end
 
     test "complex 1" do
       assert parse("SELECT :a+2*:b+age::int FROM users WHERE username = :name AND :b > 0") ==
                {
                  :ok,
-                 "SELECT ?+2*?+age::int FROM users WHERE username = ? AND ? > 0",
-                 [:a, :b, :name, :b]
+                 "SELECT $1+2*$2+age::int FROM users WHERE username = $3 AND $2 > 0",
+                 [:a, :b, :name]
                }
     end
 
@@ -62,14 +62,14 @@ defmodule YesqlTest do
       assert parse("SELECT :value1 + :value2 + value3 + :value4 + :value1\nFROM SYSIBM.SYSDUMMY1") ==
                {
                  :ok,
-                 "SELECT ? + ? + value3 + ? + ?\nFROM SYSIBM.SYSDUMMY1",
-                 [:value1, :value2, :value4, :value1]
+                 "SELECT $1 + $2 + value3 + $3 + $1\nFROM SYSIBM.SYSDUMMY1",
+                 [:value1, :value2, :value4]
                }
     end
 
     test "complex 3" do
       assert parse("SELECT ARRAY [:value1] FROM dual") ==
-               {:ok, "SELECT ARRAY [?] FROM dual", [:value1]}
+               {:ok, "SELECT ARRAY [$1] FROM dual", [:value1]}
     end
   end
 
@@ -77,7 +77,7 @@ defmodule YesqlTest do
     setup [:truncate_postgres_cats]
 
     test "unknown driver" do
-      assert_raise Yesql.UnknownDriver, "Unknown database driver Elixir.Boopatron", fn ->
+      assert_raise Yesql.UnknownDriver, "Unknown database driver Elixir.Boopatron\n", fn ->
         Yesql.exec(self(), Boopatron, "", [], %{})
       end
     end
@@ -107,4 +107,50 @@ defmodule YesqlTest do
       assert error.postgres.message == "column \"size\" of relation \"cats\" does not exist"
     end
   end
+
+  describe "defquery/2" do
+    setup [:truncate_postgres_cats]
+
+    use Yesql, driver: Postgrex
+
+    Yesql.defquery("test/sql/select_older_cats.sql")
+    Yesql.defquery("test/sql/insert_cat.sql")
+
+    test "query function is created" do
+      assert function_exported?(__MODULE__, :select_older_cats, 2)
+    end
+
+    test "throws if map argument missing" do
+      assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
+        select_older_cats(nil, %{})
+      end
+    end
+
+    test "throws if keyword argument missing" do
+      assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
+        select_older_cats(nil, [])
+      end
+    end
+
+    test "query exec", %{postgrex: conn} do
+      assert select_older_cats(conn, age: 5) == {:ok, 0, []}
+      assert insert_cat(conn, age: 50) == {:ok, 1, []}
+      assert select_older_cats(conn, age: 5) == {:ok, 1, [%{age: 50, name: nil}]}
+      assert insert_cat(conn, age: 10) == {:ok, 1, []}
+
+      assert select_older_cats(conn, age: 5) ==
+               {:ok, 2, [%{age: 10, name: nil}, %{age: 50, name: nil}]}
+
+      assert insert_cat(conn, age: 1) == {:ok, 1, []}
+
+      assert select_older_cats(conn, age: 5) ==
+               {:ok, 2, [%{age: 10, name: nil}, %{age: 50, name: nil}]}
+    end
+  end
+
+  # TODO
+  # describe "defquery/2 with driver passed"
+
+  # TODO
+  # describe "defquery/2 with conn set in use
 end
