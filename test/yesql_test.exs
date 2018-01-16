@@ -77,7 +77,7 @@ defmodule YesqlTest do
     setup [:truncate_postgres_cats]
 
     test "unknown driver" do
-      assert_raise Yesql.UnknownDriver, "Unknown database driver Elixir.Boopatron", fn ->
+      assert_raise Yesql.UnknownDriver, "Unknown database driver Elixir.Boopatron\n", fn ->
         Yesql.exec(self(), Boopatron, "", [], %{})
       end
     end
@@ -107,4 +107,34 @@ defmodule YesqlTest do
       assert error.postgres.message == "column \"size\" of relation \"cats\" does not exist"
     end
   end
+
+  describe "defquery/2" do
+    use Yesql, driver: Postgrex
+
+    Yesql.defquery("test/sql/select_older_cats.sql")
+
+    test "query function is created" do
+      assert function_exported?(__MODULE__, :select_older_cats, 2)
+    end
+
+    test "throws if map argument missing" do
+      assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
+        select_older_cats(nil, %{})
+      end
+    end
+
+    test "throws if keyword argument missing" do
+      assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
+        select_older_cats(nil, [])
+      end
+    end
+
+    # TODO: test query
+  end
+
+  # TODO
+  # describe "defquery/2 with driver passed"
+
+  # TODO
+  # describe "defquery/2 with conn set in use
 end
