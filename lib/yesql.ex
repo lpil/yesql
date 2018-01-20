@@ -10,6 +10,7 @@ defmodule Yesql do
   defmacro __using__(opts) do
     quote bind_quoted: binding() do
       @yesql_private__driver opts[:driver]
+      @yesql_private__conn opts[:conn]
     end
   end
 
@@ -19,13 +20,19 @@ defmodule Yesql do
     quote bind_quoted: binding() do
       name = file_path |> Path.basename(".sql") |> String.to_atom()
       driver = opts[:driver] || @yesql_private__driver || raise(NoDriver, name)
+      conn = opts[:conn] || @yesql_private__conn
+      {:ok, sql, param_spec} = file_path |> File.read!() |> Yesql.parse()
 
       unless driver in drivers, do: raise(UnknownDriver, driver)
 
-      {:ok, sql, param_spec} = file_path |> File.read!() |> Yesql.parse()
-
       def unquote(name)(conn, args) do
         Yesql.exec(conn, unquote(driver), unquote(sql), unquote(param_spec), args)
+      end
+
+      if conn do
+        def unquote(name)(args) do
+          Yesql.exec(unquote(conn), unquote(driver), unquote(sql), unquote(param_spec), args)
+        end
       end
     end
   end
@@ -90,11 +97,11 @@ defmodule Yesql do
   defp format_result(result) do
     atom_columns = Enum.map(result.columns || [], &String.to_atom/1)
 
-    return =
+    result =
       Enum.map(result.rows || [], fn row ->
         atom_columns |> Enum.zip(row) |> Enum.into(%{})
       end)
 
-    {:ok, result.num_rows, return}
+    {:ok, result}
   end
 end

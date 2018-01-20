@@ -1,12 +1,13 @@
 ExUnit.start()
 
 defmodule TestHelper do
-  def new_postgrex_connection(_) do
+  def new_postgrex_connection(ctx) do
     opts = [
       hostname: "localhost",
       username: "postgres",
       password: "postgres",
-      database: "yesql_test"
+      database: "yesql_test",
+      name: Module.concat(ctx.module, Postgrex)
     ]
 
     {:ok, conn} = Postgrex.start_link(opts)
@@ -17,6 +18,7 @@ defmodule TestHelper do
     drop_sql = """
     DROP TABLE IF EXISTS cats;
     """
+
     create_sql = """
     CREATE TABLE cats (
       age  integer NOT NULL,
