@@ -74,8 +74,6 @@ We've talked about Ecto, but how does Yesql compare to `$OTHER_LIBRARY`?
 
 eql is an Erlang library with similar inspiration and goals.
 
-- eql query parameters are not sanitised, the library user has to implement
-  this. Yesql uses prepared statements so parameters are always sanitised.
 - eql offers no solution for query execution, the library user has to
   implement this. Yesql offers a friendly API.
 - Being an Erlang library eql has to compile the queries at runtime, Yesql
@@ -83,6 +81,10 @@ eql is an Erlang library with similar inspiration and goals.
   store your queries somewhere.
 - eql requires the `neotoma` PEG compiler plugin, Yesql only uses the Elixir
   standard library.
+- Yesql uses prepared statements so query parameters are sanitised and are
+  only valid in positions that your database will accept parameters. eql
+  functions more like a templating tool so parameters can be used in any
+  position and sanitisation is left up to the user.
 - A subjective point, but I believe the Yesql's implementation is simpler than
   eql's, while offering more features.
 
