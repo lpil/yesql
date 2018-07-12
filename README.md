@@ -40,7 +40,7 @@ iex> Query.users_by_country(country_code: "gbr")
 {:ok, [%{name: "Louis", country_code: "gbr"}]}
 ```
 
-By keeping the SQL and Clojure separate you get:
+By keeping the SQL and Elixir separate you get:
 
 - No syntactic surprises. Your database doesn't stick to the SQL
   standard - none of them do - but Yesql doesn't care. You will
