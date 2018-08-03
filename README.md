@@ -2,7 +2,6 @@
 
 Yesql is an Elixir library for _using_ SQL.
 
-
 ## Rationale
 
 You're writing Elixir You need to write some SQL.

@@ -6,6 +6,7 @@ defmodule Yesql.MissingParam do
     msg = """
     Required parameter `:#{param}` not given
     """
+
     %__MODULE__{message: msg}
   end
 end
@@ -18,6 +19,7 @@ defmodule Yesql.UnknownDriver do
     msg = """
     Unknown database driver #{driver}
     """
+
     %__MODULE__{message: msg}
   end
 end

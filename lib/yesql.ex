@@ -1,11 +1,24 @@
 defmodule Yesql do
   @moduledoc """
-  Documentation for Yesql.
+
+      defmodule Query do
+        use Yesql, driver: Postgrex, conn: MyApp.ConnectionPool
+
+        Yesql.defquery("some/where/select_users_by_country.sql")
+      end
+
+      Query.users_by_country(country_code: "gbr")
+      # => {:ok, [%{name: "Louis", country_code: "gbr"}]}
+
+  ## Supported drivers
+
+  - `Postgrex`
+  - `Ecto`, for which `conn` is an Ecto repo.
   """
 
   alias __MODULE__.{NoDriver, UnknownDriver, MissingParam}
 
-  @supported_drivers [Postgrex]
+  @supported_drivers [Postgrex, Ecto]
 
   defmacro __using__(opts) do
     quote bind_quoted: binding() do
@@ -87,6 +100,12 @@ defmodule Yesql do
   if Code.ensure_compiled?(Postgrex) do
     defp exec_for_driver(conn, Postgrex, sql, param_list) do
       Postgrex.query(conn, sql, param_list)
+    end
+  end
+
+  if Code.ensure_compiled?(Ecto) do
+    defp exec_for_driver(repo, Ecto, sql, param_list) do
+      Ecto.Adapters.SQL.query(repo, sql, param_list)
     end
   end
 

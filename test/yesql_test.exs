@@ -3,6 +3,25 @@ defmodule YesqlTest do
   doctest Yesql
   import TestHelper
 
+  defmodule Query do
+    use Yesql, driver: Postgrex
+
+    Yesql.defquery("test/sql/select_older_cats.sql")
+    Yesql.defquery("test/sql/insert_cat.sql")
+  end
+
+  defmodule QueryConn do
+    use Yesql, driver: Postgrex, conn: YesqlTest.Postgrex
+    Yesql.defquery("test/sql/select_older_cats.sql")
+    Yesql.defquery("test/sql/insert_cat.sql")
+  end
+
+  defmodule QueryEcto do
+    use Yesql, driver: Ecto, conn: YesqlTest.Repo
+    Yesql.defquery("test/sql/select_older_cats.sql")
+    Yesql.defquery("test/sql/insert_cat.sql")
+  end
+
   setup_all [:new_postgrex_connection, :create_cats_postgres_table]
 
   describe "parse/1" do
@@ -112,31 +131,28 @@ defmodule YesqlTest do
   describe "defquery/2" do
     setup [:truncate_postgres_cats]
 
-    defmodule Query do
-      use Yesql, driver: Postgrex
-
-      Yesql.defquery("test/sql/select_older_cats.sql")
-      Yesql.defquery("test/sql/insert_cat.sql")
-    end
-
     test "query function is created" do
       refute function_exported?(Query, :select_older_cats, 1)
       assert function_exported?(Query, :select_older_cats, 2)
+
+      # The /1 arity function is called because conn isn't needed.
+      assert function_exported?(QueryConn, :select_older_cats, 1)
+      assert function_exported?(QueryConn, :select_older_cats, 2)
     end
 
     test "throws if map argument missing" do
       assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
-        Query.select_older_cats(nil, %{})
+        QueryConn.select_older_cats(%{})
       end
     end
 
     test "throws if keyword argument missing" do
       assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
-        Query.select_older_cats(nil, [])
+        QueryConn.select_older_cats(nil, [])
       end
     end
 
-    test "query exec", %{postgrex: conn} do
+    test "query exec with explicit conn", %{postgrex: conn} do
       assert Query.select_older_cats(conn, age: 5) == {:ok, []}
       assert Query.insert_cat(conn, age: 50) == {:ok, []}
       assert Query.select_older_cats(conn, age: 5) == {:ok, [%{age: 50, name: nil}]}
@@ -150,38 +166,8 @@ defmodule YesqlTest do
       assert Query.select_older_cats(conn, age: 5) ==
                {:ok, [%{age: 10, name: nil}, %{age: 50, name: nil}]}
     end
-  end
 
-  # TODO
-  # describe "defquery/2 with driver passed"
-
-  describe "defquery/2 with conn" do
-    setup [:truncate_postgres_cats]
-
-    defmodule QueryConn do
-      use Yesql, driver: Postgrex, conn: YesqlTest.Postgrex
-      Yesql.defquery("test/sql/select_older_cats.sql")
-      Yesql.defquery("test/sql/insert_cat.sql")
-    end
-
-    test "query function is created" do
-      assert function_exported?(QueryConn, :select_older_cats, 1)
-      assert function_exported?(QueryConn, :select_older_cats, 2)
-    end
-
-    test "throws if map argument missing" do
-      assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
-        QueryConn.select_older_cats(%{})
-      end
-    end
-
-    test "throws if keyword argument missing" do
-      assert_raise Yesql.MissingParam, "Required parameter `:age` not given\n", fn ->
-        QueryConn.select_older_cats([])
-      end
-    end
-
-    test "query exec" do
+    test "query exec with implicit conn" do
       assert QueryConn.select_older_cats(age: 5) == {:ok, []}
       assert QueryConn.insert_cat(age: 50) == {:ok, []}
       assert QueryConn.select_older_cats(age: 5) == {:ok, [%{age: 50, name: nil}]}
@@ -194,6 +180,12 @@ defmodule YesqlTest do
 
       assert QueryConn.select_older_cats(age: 5) ==
                {:ok, [%{age: 10, name: nil}, %{age: 50, name: nil}]}
+    end
+
+    test "query exec with Ecto driver" do
+      assert QueryEcto.select_older_cats(age: 5) == {:ok, []}
+      assert QueryEcto.insert_cat(age: 50) == {:ok, []}
+      assert QueryEcto.select_older_cats(age: 5) == {:ok, [%{age: 50, name: nil}]}
     end
   end
 end
