@@ -39,14 +39,15 @@ defmodule Yesql.Mixfile do
   defp deps do
     [
       # Postgresql driver
-      {:postgrex, "~> 0.12", optional: true},
+      {:postgrex, "~> 0.15.3", optional: true},
       # Database abstraction
-      {:ecto, "~> 2.0", optional: true},
+      {:ecto_sql, "~> 3.4", optional: true},
+      {:ecto, "~> 3.4.2", optional: true},
 
       # Automatic testing tool
       {:mix_test_watch, ">= 0.0.0", only: :dev},
       # Documentation generator
-      {:ex_doc, "~> 0.18", only: :dev}
+      {:ex_doc, "~> 0.21", only: :dev}
     ]
   end
 end
