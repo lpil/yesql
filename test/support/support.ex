@@ -9,5 +9,7 @@ defmodule YesqlTest.Application do
 end
 
 defmodule YesqlTest.Repo do
-  use Ecto.Repo, otp_app: :yesql
+  use Ecto.Repo,
+    otp_app: :yesql,
+    adapter: Ecto.Adapters.Postgres
 end

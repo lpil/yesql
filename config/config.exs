@@ -4,8 +4,6 @@ case Mix.env() do
   :test ->
     config :yesql, ecto_repos: [YesqlTest.Repo]
 
-    config :yesql, YesqlTest.Repo, adapter: Ecto.Adapters.Postgres
-
     config :yesql, YesqlTest.Repo,
       username: "postgres",
       password: "postgres",
