@@ -87,6 +87,19 @@ eql is an Erlang library with similar inspiration and goals.
 - A subjective point, but I believe the Yesql's implementation is simpler than
   eql's, while offering more features.
 
+### [ayesql](https://github.com/alexdesousa/ayesql)
+
+ayesql is another Elixir library, a bit more powerful than yesql:
+
+- It offers support for various SQL statements in a single file.
+- Special constructs for [query composability](https://hexdocs.pm/ayesql/readme.html#query-composition) in SQL files.
+- Special constructs for [optional parameters](https://hexdocs.pm/ayesql/readme.html#optional-parameters) in SQL files.
+
+Should I use ayesql then? Not necessarily... it may depend on your style preference.
+
+yesql will keep your SQL queries closer to canonical SQL, but if you start finding
+it limiting or convoluted maybe it would be a good time to check out more powerful
+abstractions like ayesql or Ecto.
 
 ## Development & Testing
 
@@ -107,6 +120,7 @@ Similar libraries can be found for many languages:
 | C#         | [JaSql](https://bitbucket.org/rick/jasql)          |
 | Clojure    | [YeSPARQL](https://github.com/joelkuiper/yesparql) |
 | Clojure    | [Yesql](https://github.com/krisajenkins/yesql)     |
+| Elixir     | [ayesql](https://github.com/alexdesousa/ayesql)    |
 | Erlang     | [eql](https://github.com/artemeff/eql)             |
 | Go         | [DotSql](https://github.com/gchaincl/dotsql)       |
 | Go         | [goyesql](https://github.com/nleof/goyesql)        |
