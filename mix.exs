@@ -11,12 +11,23 @@ defmodule Yesql.Mixfile do
       deps: deps(),
       name: "Yesql",
       description: "Using plain old SQL to query databases",
+      source_url: "https://github.com/lpil/yesql",
+      docs: docs(),
       package: [
         maintainers: ["Louis Pilfold"],
         licenses: ["Apache 2.0"],
         links: %{"GitHub" => "https://github.com/lpil/yesql"},
         files: ~w(LICENCE README.md lib src/Elixir.Yesql.Tokenizer.xrl mix.exs)
       ]
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: [
+        "README.md",
+      ],
     ]
   end
 
