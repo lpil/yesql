@@ -63,7 +63,7 @@ defmodule Yesql.Mixfile do
       # Automatic testing tool
       {:mix_test_watch, ">= 0.0.0", only: :dev},
       # Documentation generator
-      {:ex_doc, "~> 0.21", only: :dev}
+      {:ex_doc, "~> 0.21.3", only: :dev}
     ]
   end
 end
