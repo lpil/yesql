@@ -27,7 +27,12 @@ defmodule Yesql.Mixfile do
       main: "readme",
       extras: [
         "README.md",
+        "guides/ecto_configuration.md",
+        "guides/postgrex_configuration.md"
       ],
+      groups_for_extras: [
+        "Configuration": Path.wildcard("guides/*.md")
+      ]
     ]
   end
 

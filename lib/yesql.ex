@@ -14,6 +14,12 @@ defmodule Yesql do
 
   - `Postgrex`
   - `Ecto`, for which `conn` is an Ecto repo.
+
+  ## Configuration
+
+  Checkout the [Postgrex](postgrex_configuration.html) or
+  [Ecto](ecto_configuration.html) configuration guides.
+
   """
 
   alias __MODULE__.{NoDriver, UnknownDriver, MissingParam}
