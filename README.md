@@ -95,8 +95,6 @@ ayesql is another Elixir library, a bit more powerful than yesql:
 - Special constructs for [query composability](https://hexdocs.pm/ayesql/readme.html#query-composition) in SQL files.
 - Special constructs for [optional parameters](https://hexdocs.pm/ayesql/readme.html#optional-parameters) in SQL files.
 
-Should I use ayesql then? Not necessarily... it may depend on your style preference.
-
 yesql will keep your SQL queries closer to canonical SQL, but if you start finding
 it limiting or convoluted maybe it would be a good time to check out more powerful
 abstractions like ayesql or Ecto.
