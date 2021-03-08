@@ -40,7 +40,7 @@ defmodule Yesql do
       name = file_path |> Path.basename(".sql") |> String.to_atom()
       driver = opts[:driver] || @yesql_private__driver || raise(NoDriver, name)
       conn = opts[:conn] || @yesql_private__conn
-      {:ok, sql, param_spec} = file_path |> File.read!() |> Yesql.parse()
+      {:ok, sql, param_spec} = file_path |> File.read!() |> String.replace("\r\n", "\n") |> Yesql.parse()
 
       unless driver in drivers, do: raise(UnknownDriver, driver)
 

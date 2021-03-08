@@ -8,18 +8,21 @@ defmodule YesqlTest do
 
     Yesql.defquery("test/sql/select_older_cats.sql")
     Yesql.defquery("test/sql/insert_cat.sql")
+    Yesql.defquery("test/sql/select_windows_cats.sql")
   end
 
   defmodule QueryConn do
     use Yesql, driver: Postgrex, conn: YesqlTest.Postgrex
     Yesql.defquery("test/sql/select_older_cats.sql")
     Yesql.defquery("test/sql/insert_cat.sql")
+    Yesql.defquery("test/sql/select_windows_cats.sql")
   end
 
   defmodule QueryEcto do
     use Yesql, driver: Ecto, conn: YesqlTest.Repo
     Yesql.defquery("test/sql/select_older_cats.sql")
     Yesql.defquery("test/sql/insert_cat.sql")
+    Yesql.defquery("test/sql/select_windows_cats.sql")
   end
 
   setup_all [:new_postgrex_connection, :create_cats_postgres_table]
@@ -134,6 +137,7 @@ defmodule YesqlTest do
     test "query function is created" do
       refute function_exported?(Query, :select_older_cats, 1)
       assert function_exported?(Query, :select_older_cats, 2)
+      assert function_exported?(Query, :select_windows_cats, 2)
 
       # The /1 arity function is called because conn isn't needed.
       assert function_exported?(QueryConn, :select_older_cats, 1)
@@ -186,6 +190,10 @@ defmodule YesqlTest do
       assert QueryEcto.select_older_cats(age: 5) == {:ok, []}
       assert QueryEcto.insert_cat(age: 50) == {:ok, []}
       assert QueryEcto.select_older_cats(age: 5) == {:ok, [%{age: 50, name: nil}]}
+    end
+
+    test "handle windows \r\n style line-endings correctly" do
+      assert QueryConn.select_windows_cats(age: 1000) == {:ok, []}
     end
   end
 end
