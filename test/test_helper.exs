@@ -1,9 +1,6 @@
 {:ok, _} = Application.ensure_all_started(:postgrex)
 ExUnit.start()
 
-# Fedora: maybe use postgres container if needed:
-# podman run -it --name postgres -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=yesql_test -p 5432:5432 postgres
-
 defmodule TestHelper do
   def new_postgrex_connection(ctx) do
     opts = [
