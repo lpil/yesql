@@ -193,6 +193,7 @@ defmodule YesqlTest do
     end
 
     test "handle windows \r\n style line-endings correctly" do
+      assert File.read!("test/sql/select_windows_cats.sql") |> String.contains?("\r\n") == true
       assert QueryConn.select_windows_cats(age: 1000) == {:ok, []}
     end
   end
