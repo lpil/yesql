@@ -1,4 +1,5 @@
 defmodule Yesql do
+  use CustomDrivers
   @moduledoc """
 
       defmodule Query do
@@ -14,6 +15,8 @@ defmodule Yesql do
 
   - `Postgrex`
   - `Ecto`, for which `conn` is an Ecto repo.
+  - `Custom`, a CustomDriver.query/4 function has to be defined
+  The drivers ar loaded via CustomDriver module.
 
   ## Configuration
 
@@ -24,8 +27,6 @@ defmodule Yesql do
 
   alias __MODULE__.{NoDriver, UnknownDriver, MissingParam}
 
-  @supported_drivers [Postgrex, Ecto]
-
   defmacro __using__(opts) do
     quote bind_quoted: binding() do
       @yesql_private__driver opts[:driver]
@@ -35,6 +36,7 @@ defmodule Yesql do
 
   defmacro defquery(file_path, opts \\ []) do
     drivers = @supported_drivers
+    #IO.inspect drivers
 
     quote bind_quoted: binding() do
       name = file_path |> Path.basename(".sql") |> String.to_atom()
@@ -103,15 +105,24 @@ defmodule Yesql do
   defp dict_fetch(dict, key) when is_map(dict), do: Map.fetch(dict, key)
   defp dict_fetch(dict, key) when is_list(dict), do: Keyword.fetch(dict, key)
 
-  if Code.ensure_compiled?(Postgrex) do
-    defp exec_for_driver(conn, Postgrex, sql, param_list) do
-      Postgrex.query(conn, sql, param_list)
-    end
-  end
-
-  if Code.ensure_compiled?(Ecto) do
-    defp exec_for_driver(repo, Ecto, sql, param_list) do
-      Ecto.Adapters.SQL.query(repo, sql, param_list)
+  for driver <- @supported_drivers do
+    case Code.ensure_compiled(driver) do
+      {:module, modulename} ->
+        case modulename do
+          Postgrex ->   defp exec_for_driver(conn, Postgrex, sql, param_list) do
+                          Postgrex.query(conn, sql, param_list)
+                        end
+          Ecto ->   defp exec_for_driver(repo, Ecto, sql, param_list) do
+                      Ecto.Adapters.SQL.query(repo, sql, param_list)
+                    end
+          custom_driver ->
+            if Kernel.function_exported?(custom_driver.query, :keys, 4) do
+              defp exec_for_driver(repo, custom_driver, sql, param_list) do
+                custom_driver.query(repo, sql, param_list)
+              end
+            end
+        end
+      _ -> raise UnknownDriver.exception(driver)
     end
   end
 
