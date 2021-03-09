@@ -40,7 +40,9 @@ defmodule Yesql do
       name = file_path |> Path.basename(".sql") |> String.to_atom()
       driver = opts[:driver] || @yesql_private__driver || raise(NoDriver, name)
       conn = opts[:conn] || @yesql_private__conn
-      {:ok, sql, param_spec} = file_path |> File.read!() |> String.replace("\r\n", "\n") |> Yesql.parse()
+
+      {:ok, sql, param_spec} =
+        file_path |> File.read!() |> String.replace("\r\n", "\n") |> Yesql.parse()
 
       unless driver in drivers, do: raise(UnknownDriver, driver)
 
@@ -103,13 +105,15 @@ defmodule Yesql do
   defp dict_fetch(dict, key) when is_map(dict), do: Map.fetch(dict, key)
   defp dict_fetch(dict, key) when is_list(dict), do: Keyword.fetch(dict, key)
 
-  if Code.ensure_compiled?(Postgrex) do
+  is_compiled? = fn module -> match?({:module, ^module}, Code.ensure_compiled(module)) end
+
+  if is_compiled?.(Postgrex) do
     defp exec_for_driver(conn, Postgrex, sql, param_list) do
       Postgrex.query(conn, sql, param_list)
     end
   end
 
-  if Code.ensure_compiled?(Ecto) do
+  if is_compiled?.(Ecto) do
     defp exec_for_driver(repo, Ecto, sql, param_list) do
       Ecto.Adapters.SQL.query(repo, sql, param_list)
     end

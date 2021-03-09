@@ -4,7 +4,7 @@ defmodule Yesql.Mixfile do
   def project do
     [
       app: :yesql,
-      version: "0.3.0",
+      version: "1.0.1",
       elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -31,7 +31,7 @@ defmodule Yesql.Mixfile do
         "guides/postgrex_configuration.md"
       ],
       groups_for_extras: [
-        "Configuration": Path.wildcard("guides/*.md")
+        Configuration: Path.wildcard("guides/*.md")
       ]
     ]
   end
@@ -55,15 +55,15 @@ defmodule Yesql.Mixfile do
   defp deps do
     [
       # Postgresql driver
-      {:postgrex, "~> 0.15.3", optional: true},
+      {:postgrex, "~> 0.15", optional: true},
       # Database abstraction
       {:ecto_sql, "~> 3.4", optional: true},
-      {:ecto, "~> 3.4.2", optional: true},
+      {:ecto, "~> 3.4", optional: true},
 
       # Automatic testing tool
       {:mix_test_watch, ">= 0.0.0", only: :dev},
       # Documentation generator
-      {:ex_doc, "~> 0.21.3", only: :dev}
+      {:ex_doc, "~> 0.23", only: :dev}
     ]
   end
 end
